@@ -9,13 +9,18 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
+// Route mặc định kiểm tra server
+app.get("/", (req, res) => {
+  res.send("Hello, Heroku! Ứng dụng đang chạy 🚀");
+});
+
 // Kết nối MongoDB
 mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 })
 .then(() => console.log("MongoDB connected"))
-.catch(err => console.log(err));
+.catch(err => console.error("MongoDB connection error:", err));
 
 // Định nghĩa Schema và Model
 const ProductSchema = new mongoose.Schema({
