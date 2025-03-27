@@ -12,6 +12,11 @@ mongoose.connect(process.env.MONGO_URI);
 mongoose.connection.on("connected", () => console.log("✅ Kết nối MongoDB thành công!"));
 mongoose.connection.on("error", (err) => console.error("❌ Lỗi MongoDB:", err));
 
+// Route chính (fix lỗi "Cannot GET /")
+app.get("/", (req, res) => {
+  res.send("🔥 Server đang chạy! Truy cập /products để xem danh sách sản phẩm.");
+});
+
 // API: Thêm sản phẩm
 app.post("/products", async (req, res) => {
   try {
