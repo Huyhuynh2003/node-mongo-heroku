@@ -1,37 +1,42 @@
+const express = require("express");
 const mongoose = require("mongoose");
-require('dotenv').config();
-console.log("🛠 Đang kiểm tra biến môi trường...");
-console.log("MONGO_URI từ .env:", process.env.MONGO_URI);
+require("dotenv").config();
+const Product = require("./models/Product");
 
+const app = express();
+app.use(express.json());
 
-// Kiểm tra xem biến môi trường có được load không
-if (!process.env.MONGO_URI) {
-  console.error("❌ Lỗi: MONGO_URI không được định nghĩa trong file .env");
-  process.exit(1); // Dừng chương trình
-}
-
-const uri = process.env.MONGO_URI; // Lấy từ .env
-
-// Kết nối đến MongoDB
-mongoose.connect(uri, {
+// Kết nối MongoDB
+mongoose.connect(process.env.MONGO_URI, {
   useNewUrlParser: true,
-  useUnifiedTopology: true
+  useUnifiedTopology: true,
 });
 
-// Kiểm tra kết nối
-const db = mongoose.connection;
+mongoose.connection.on("connected", () => console.log("✅ Kết nối MongoDB thành công!"));
+mongoose.connection.on("error", (err) => console.error("❌ Lỗi MongoDB:", err));
 
-// Khi kết nối thành công
-db.on("connected", () => {
-  console.log("✅ Kết nối MongoDB thành công!");
+// API: Thêm sản phẩm
+app.post("/products", async (req, res) => {
+  try {
+    const { name, price, description } = req.body;
+    const newProduct = new Product({ name, price, description });
+    await newProduct.save();
+    res.status(201).json({ message: "Sản phẩm đã được thêm!", product: newProduct });
+  } catch (error) {
+    res.status(500).json({ error: "Lỗi khi thêm sản phẩm!" });
+  }
 });
 
-// Khi có lỗi xảy ra
-db.on("error", (err) => {
-  console.error("❌ Lỗi kết nối MongoDB:", err);
+// API: Tìm kiếm sản phẩm theo tên
+app.get("/products", async (req, res) => {
+  try {
+    const { name } = req.query;
+    const products = await Product.find(name ? { name: new RegExp(name, "i") } : {});
+    res.json(products);
+  } catch (error) {
+    res.status(500).json({ error: "Lỗi khi tìm kiếm sản phẩm!" });
+  }
 });
 
-// Khi mất kết nối
-db.on("disconnected", () => {
-  console.log("⚠️ Kết nối MongoDB đã đóng!");
-});
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`🚀 Server đang chạy trên cổng ${PORT}`));
